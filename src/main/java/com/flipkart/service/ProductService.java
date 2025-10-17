@@ -1,52 +1,65 @@
 package com.flipkart.service;
 
-import java.util.List;
-import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import com.flipkart.model.Product;
 import com.flipkart.repository.ProductRepository;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class ProductService {
 
-    @Autowired
-    private ProductRepository productRepository;
+    private final ProductRepository productRepository;
 
-    // CREATE & SAVE
-    public Product saveProduct(Product product) {
+    public ProductService(ProductRepository productRepository) {
+        this.productRepository = productRepository;
+    }
+
+    // Add single product
+    public Product addProduct(Product product) {
         return productRepository.save(product);
     }
 
-    // READ ALL
+    // Bulk upload products
+    public List<Product> bulkUpload(List<Product> products) {
+        return productRepository.saveAll(products);
+    }
+
+    // Get all products
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
 
-    // READ ONE
+    // Get product by ID
     public Product getProductById(Long id) {
-        Optional<Product> product = productRepository.findById(id);
-        return product.orElse(null); // returns null if not found
+        return productRepository.findById(id).orElse(null);
     }
 
-    // UPDATE
+    // Update product
     public Product updateProduct(Long id, Product updatedProduct) {
-        Optional<Product> productOpt = productRepository.findById(id);
-        if (productOpt.isPresent()) {
-            Product product = productOpt.get();
-            product.setName(updatedProduct.getName());
-            product.setDescription(updatedProduct.getDescription());
-            product.setPrice(updatedProduct.getPrice());
-            product.setStock(updatedProduct.getStock());
-            return productRepository.save(product);
+        Product existingProduct = productRepository.findById(id).orElse(null);
+        if (existingProduct != null) {
+            existingProduct.setName(updatedProduct.getName());
+            existingProduct.setDescription(updatedProduct.getDescription());
+            existingProduct.setPrice(updatedProduct.getPrice());
+            existingProduct.setQuantity(updatedProduct.getQuantity());
+            existingProduct.setImageUrl(updatedProduct.getImageUrl());
+            return productRepository.save(existingProduct);
         }
-        return null; // return null if product not found
+        return null;
     }
 
-    // DELETE
-    public void deleteProduct(Long id) {
-        productRepository.deleteById(id);
+    // Delete product by ID
+    public boolean deleteProduct(Long id) {
+        if (productRepository.existsById(id)) {
+            productRepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
+    // Delete all products
+    public void deleteAllProducts() {
+        productRepository.deleteAll();
     }
 }
